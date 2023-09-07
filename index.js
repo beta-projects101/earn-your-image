@@ -29,8 +29,8 @@ let model;
 const log = (msg) => console.log(msg);
 
 const options = {
-    modelPath: '../models/default-f16/model.json',
-    imagePath: '../samples/example.jpg',
+    modelPath: './models/default-f16/model.json',
+    imagePath: './samples/example.jpg',
     minScore: 0.38,
     maxResults: 50,
     iouThreshold: 0.5,
