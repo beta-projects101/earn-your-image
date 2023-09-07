@@ -271,6 +271,10 @@ function reset() {
     blurCtx.clearRect(0, 0, blurCanvas.width, blurCanvas.height);
     brightCtx.clearRect(0, 0, brightCanvas.width, brightCanvas.height);
     gameCtx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+    taskContainer.style.display = 'none'
+    done.disabled = false
+    gameCanvas.addEventListener('click', clickFunc, false)
+    boxes = {}
     main()
 }
 
@@ -299,24 +303,31 @@ const tasks = {
         'Denied until someone gives you permission to cum',
     ],
     taskArr: [
-        'Edge X times',
-        'Slap balls X times',
-        'Use 2 fingers to stroke',
-        'Taste your precum',
-        'Moan like a good little slut',
-        'Watch 5 minutes of BBC porn without touching',
-        'Make an ahegao face while you jerk off for 2 minutes',
-        'Use your non dominant hand to stroke',
-        'Put your used underwear in your mouth for 5 minutes',
-        'Tie your pathetic balls up',
-        'Stroke at 60 BPM for the rest of the game',
-        'Find a beta safe wallpaper and have it set for 1 week',
-        'Spank your ass X times hard',
-        'stroke just the tip of your pathetic clit',
-        'Slap your face with your precum',
-        'Play a game of chess, slap your balls for every piece taken off the board'
+        'Edge X times', //0
+        'Slap balls X times', //1
+        'Use 2 fingers to stroke', //2
+        'Taste your precum', //3
+        'Moan like a good little slut', //4
+        'Watch 5 minutes of BBC porn without touching', //5
+        'Make an ahegao face while you jerk off for 2 minutes', //6
+        'Use your non dominant hand to stroke', //7
+        'Put your used underwear in your mouth for 5 minutes', //8
+        'Tie your pathetic balls up', //9
+        'Stroke at 60 BPM for the rest of the game', //10
+        'Find a beta safe wallpaper and have it set for 1 week', //11
+        'Spank your ass X times hard', //12
+        'stroke just the tip of your pathetic clit', //13
+        'Slap your face with your precum', //14
+        'Play a game of chess, slap your balls for every piece taken off the board', //15
+        'Put clips on your nipples', //16
+        'Write "Bad Slut" on your body', //17
+        'Insert a butt plug', //18
+        'You can undo one task if applicable', //19
+        'Write "Free use slut" on your ass cheek', //20
+        'On your knees, bitch', //21
+        'Spit on your hand and use it as lube', //22
     ],
-    useOnce: [10,11,15],
+    useOnce: [10,11,15,16,17,18,19,20,21],
     orgasmType: ''
 }
 
@@ -345,42 +356,13 @@ class Box {
         }
     }
 
-    getLines() {
-        var words = this.task.split(' '),
-        lines = [],
-        line = "";
-        if (gameCtx.measureText(this.task).width < this.w-10) return [this.task];
-        while (words.length > 0) {
-            var split = false;
-            while (gameCtx.measureText(words[0]).width >= this.w-10) {
-                var tmp = words[0];
-                words[0] = tmp.slice(0, -1);
-                if (!split) {
-                    split = true;
-                    words.splice(1, 0, tmp.slice(-1));
-                } else {
-                    words[1] = tmp.slice(-1) + words[1];
-                }
-            }
-            if (gameCtx.measureText(line + words[0]).width < this.w-10) {
-                line += words.shift() + " ";
-            } else {
-                lines.push(line);
-                line = "";
-            }
-            if (words.length === 0) {
-                lines.push(line);
-            }
-        }
-        return lines;
-    }
-
     pauseGame(gameOver=null) {
         gameCanvas.removeEventListener('click', clickFunc)
         taskContainer.style.display = 'flex'
         task.innerText += ' ' + this.task
 
         if (gameOver) {
+            done.disabled = true
             clickedInput.value = this.id + ' over'
         } else {
             clickedInput.value = this.id
@@ -388,7 +370,14 @@ class Box {
     }
 
     drawText() {
-        if (!this.task) return;
+        if (!this.task) {
+            removeTile(this.id)
+            delete boxes[this.id]
+            if (tasks.endArr.includes(this.task)) {
+                this.pauseGame('over')
+            }
+            return
+        };
         if (this.text) return;
 
         if (tasks.endArr.includes(this.task)) {
@@ -397,24 +386,26 @@ class Box {
             this.pauseGame()
         }
 
-        let lines = this.getLines();
-
-        gameCtx.font = "17px serif";
-        gameCtx.fillStyle = 'white';
-
-        let heightCount = 16;
-        let leftCount = 2;
-
-        for (const line of lines) {
-            gameCtx.fillText(line, this.left + leftCount, this.top + heightCount);
-            heightCount += 20
-        }
-
         this.text = true
     }
 }
 
-const boxes = {}
+let boxes = {}
+
+function removeTile(boxId) {
+    let boxDelete = boxes[boxId]
+
+    let newCanvas = document.createElement('canvas')
+    let newCtx = newCanvas.getContext('2d')
+
+    newCanvas.width = boxDelete.w
+    newCanvas.height = boxDelete.h
+
+    newCtx.drawImage(canvas, boxDelete.left, boxDelete.top, boxDelete.w, boxDelete.h, 0, 0, boxDelete.w, boxDelete.h)
+    gameCtx.drawImage(newCanvas, boxDelete.left, boxDelete.top, boxDelete.w, boxDelete.h)
+
+    delete boxes[boxId]
+}
 
 done.addEventListener('click', () => {
     let parts = clickedInput.value.split(' ')
@@ -429,18 +420,7 @@ done.addEventListener('click', () => {
         taskContainer.style.opacity = 0.3
     }
 
-    let boxDelete = boxes[clickedInput.value]
-
-    let newCanvas = document.createElement('canvas')
-    let newCtx = newCanvas.getContext('2d')
-
-    newCanvas.width = boxDelete.w
-    newCanvas.height = boxDelete.h
-
-    newCtx.drawImage(canvas, boxDelete.left, boxDelete.top, boxDelete.w, boxDelete.h, 0, 0, boxDelete.w, boxDelete.h)
-    gameCtx.drawImage(newCanvas, boxDelete.left, boxDelete.top, boxDelete.w, boxDelete.h)
-
-    delete boxes[clickedInput.value]
+    removeTile(clickedInput.value)
 
     clickedInput.value = ''
 })
