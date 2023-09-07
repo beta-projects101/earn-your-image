@@ -364,6 +364,7 @@ class Box {
         if (gameOver) {
             done.disabled = true
             clickedInput.value = this.id + ' over'
+            task.innerText = 'Current Task: ' + this.task
         } else {
             clickedInput.value = this.id
         }
